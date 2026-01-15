@@ -1,37 +1,21 @@
 import random
-from collections import Counter
-
-ORIGINAL_ODDS = {"Pair": 1.5, "Straight": 2, "Full House": 3, "Balut": 10}
+from main import WINNING_ODDS, check_combination
 
 
 def roll_dice():
     return [random.randint(1, 6) for _ in range(5)]
 
 
-def check_combination(dice):
-    counts = Counter(dice)
-    sorted_dice = sorted(dice)
-
-    if len(counts) == 1:
-        return "Balut"
-    if sorted_dice in [[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]]:
-        return "Straight"
-    if sorted(counts.values()) == [2, 3]:
-        return "Full House"
-    if 2 in counts.values():
-        return "Pair"
-    return None
-
-
-def simulate(num_games, odds):
+def simulate_with_current_odds(num_games):
     total_bets = total_wins = 0
     counts = {"Pair": 0, "Straight": 0, "Full House": 0, "Balut": 0, "None": 0}
 
     for _ in range(num_games):
         total_bets += 10
-        combo = check_combination(roll_dice())
+        dice = roll_dice()
+        combo = check_combination(dice)
         if combo:
-            total_wins += 10 * odds[combo]
+            total_wins += 10 * WINNING_ODDS[combo]
             counts[combo] += 1
         else:
             counts["None"] += 1
@@ -39,23 +23,28 @@ def simulate(num_games, odds):
     return (total_wins / total_bets) * 100, counts
 
 
-print("Current RTP")
-current_rtp, counts = simulate(1000000, ORIGINAL_ODDS)
-print(f"Current RTP: {current_rtp:.2f}%\n")
+print("=" * 60)
+print("VERIFYING CURRENT RTP IN main.py")
+print("=" * 60)
+print(f"\nCurrent WINNING_ODDS in main.py:")
+for combo, odds in WINNING_ODDS.items():
+    print(f"  {combo}: {odds}x")
 
-print("Adjust odds to exactly 95% RTP")
-probs = {k: v / 1000000 for k, v in counts.items() if k != "None"}
+print(f"\nSimulating 1,000,000 games...")
+current_rtp, counts = simulate_with_current_odds(1000000)
 
-scaling_factor = 95.0 / current_rtp
-adjusted_odds = {k: v * scaling_factor for k, v in ORIGINAL_ODDS.items()}
+print(f"\nResults:")
+print(f"  Current RTP: {current_rtp:.2f}%")
+print(f"  Target RTP: 95.00%")
+print(f"  Difference: {current_rtp - 95.0:.2f}%")
 
-print("Adjusted odds:")
-for combo in ["Pair", "Straight", "Full House", "Balut"]:
-    print(f"  {combo}: x{ORIGINAL_ODDS[combo]} → x{adjusted_odds[combo]:.4f}")
+print(f"\nCombination frequencies:")
+total = sum(counts.values())
+for combo, count in counts.items():
+    pct = (count / total) * 100
+    print(f"  {combo}: {count:,} ({pct:.2f}%)")
 
-theoretical_rtp = (
-    sum(probs[combo] * adjusted_odds[combo] for combo in adjusted_odds.keys()) * 100
-)
-print(f"\nTheoretical RTP: {theoretical_rtp:.2f}% (exact)")
-print("\nNote: Verified RTP will vary slightly due to randomness.")
-print("The theoretical value is what matters - it's mathematically exact at 95%.")
+if 94.5 <= current_rtp <= 95.5:
+    print(f"\nSUCCESS: RTP is approximately 95% (within acceptable range)")
+else:
+    print(f"\nFAILURE: RTP is {current_rtp:.2f}%, not close to 95%")

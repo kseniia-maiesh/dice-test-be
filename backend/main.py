@@ -32,10 +32,10 @@ def get_db():
 
 
 WINNING_ODDS = {
-    "Pair": 1.1613,
-    "Straight": 1.5484,
-    "Full House": 2.3226,
-    "Balut": 7.7418
+    "Pair": 1.6185,
+    "Straight": 2.1580,
+    "Full House": 3.2370,
+    "Balut": 10.7899
 }
 
 
@@ -45,18 +45,19 @@ def roll_dice() -> List[int]:
 
 def check_combination(dice: List[int]) -> Optional[str]:
     counts = Counter(dice)
-    sorted_values = sorted(dice)
+    values = sorted(dice)
+    freq = sorted(counts.values())
 
-    if len(counts) == 1:
+    if freq == [5]:
         return "Balut"
 
-    if sorted_values == [1, 2, 3, 4, 5] or sorted_values == [2, 3, 4, 5, 6]:
+    if values == [1, 2, 3, 4, 5] or values == [2, 3, 4, 5, 6]:
         return "Straight"
 
-    if sorted(counts.values()) == [2, 3]:
+    if freq == [2, 3]:
         return "Full House"
 
-    if 2 in counts.values():
+    if freq == [1, 1, 1, 2]:
         return "Pair"
 
     return None
